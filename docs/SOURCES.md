@@ -1,13 +1,13 @@
 # Sources and demo assumptions
 
-Reviewed November 14, 2026. The implementation plan supplies the shared contracts, stories, thresholds, and action wording. The broader ideation PDF provides the project context. Neither document is treated as authority to publish, message teammates, or expand Member 2 into another member's assignment.
+Reviewed November 14, 2026. The implementation plan supplies the shared contracts, stories, thresholds, and action wording. The broader ideation PDF provides the project context. The user subsequently authorized Member 3 and integration work. Neither document is treated as authority to publish or message teammates.
 
 ## Research context consulted
 
 - [NASA: Five Hazards of Human Spaceflight](https://www.nasa.gov/hrp/hazards/) identifies radiation, isolation/confinement, distance from Earth, gravity changes, and hostile/closed environments. This motivates onboard monitoring and the cabin-air distinction; it does not validate this app's numerical alert thresholds.
 - [NASA: Risks of Human Spaceflight](https://www.nasa.gov/hrp/risks/) is a broader risk/evidence entry point, not a source of patient-specific rules for this app.
 - [NASA: Ongoing HRP Research](https://www.nasa.gov/hrp/ongoing-hrp-research/) describes investigations including sleep/activity, immune biomarkers, and standard physiological measures. These support the choice of signal categories, not the synthetic values or z-score weights.
-- [CSA: Monitoring radiation for astronaut health](https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp) describes autonomous neutron monitoring technology. Radiation is retained in the shared Reading contract, but the radiation display and solar-storm interaction belong to the other team modules.
+- [CSA: Monitoring radiation for astronaut health](https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp) describes autonomous neutron monitoring technology. The integrated Storm Shield displays simulated cumulative exposure and a scripted solar-event workflow; no live dosimeter is connected.
 - [CSA: Why conduct science experiments in space?](https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp) discusses deep-space health research and communication delays, supporting the motivation for onboard decisions and asynchronous Earth support.
 
 ## Canadian resource PDF

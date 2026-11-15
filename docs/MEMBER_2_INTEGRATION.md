@@ -1,5 +1,7 @@
 # Member 2 integration guide
 
+The Member 3 cockpit is now wired to this API through `src/mission/session.ts` and `src/App.tsx`. The original `dev/` Brain lab remains available at `/brain-lab.html`. The README describes the integrated UI's manual test flow, smartwatch preview, private check-ins, and solar-event protocol. The event/session tests verify refresh, reset, review notes and radiation history in addition to the earlier Engine/Brain tests.
+
 ## Scope and ownership
 
 The concrete Member 2 prompts in the supplied implementation plan define this module. Other members' prompts describe integration expectations, not additional work assigned to Member 2. The detailed three-day-window prompt is implemented rather than adding a second EWMA detector from the broader ideation document. All four shared interfaces remain unchanged; action and transmission timestamps live in separate state objects.
@@ -43,7 +45,7 @@ The snippet shows event order; annotate the application callback parameters with
 
 `onTick` must run on a monotonic mission clock. On rewind/reset create fresh Brain and Outbox states and clear the Engine's treatments, then replay up to the target day. Do not feed unobserved future data to `updateAlertStatus` without an explicit `nowDay`. `advanceBrain` always supplies it. A full 180-day array is safe with `evaluateDay` and `driftScore`, which cut it off at the requested day.
 
-The Brain never waits on outbox delivery or reads Mars Mode. Queue a report when creating a new alert if desired, and deduplicate by episode ID in the application. The test bench queues reports on action start and through its report button. It does not implement Member 4's Earth tab or BroadcastChannel transport.
+The Brain never waits on outbox delivery or reads Mars Mode. The integrated cockpit uses `advanceMission` to process detection and packet queueing together on each intervening day, so jumping several days preserves the real detection/transmission times. The independent test bench queues on action start and its report button; it intentionally has no second Earth view. The main app now implements that view through `src/mission/useShipSync.ts` and `src/ui/EarthView.tsx`.
 
 ## API
 
@@ -98,10 +100,14 @@ Blackout blocks new outbound packets. Already launched packets finish their sche
 
 Persist the **entire** `BrainState` and `OutboxState` (including actionDays, activeEpisodes, sequence, and timings), plus the Engine's treatment state and mission day. Saving only the shared Alert/OutboxMessage arrays loses essential timing. Restore the Outbox using `restoreOutbox`; version and validate the application's full session payload. In the test bench a bad session resets to a fresh case and unavailable localStorage falls back to in-memory state.
 
-Member 4 should broadcast `{ day, marsMode, lightTimeMin, outbox }` with full OutboxState or include its timing sidecar explicitly. A confirmed outbound message's badge refers to the automatic acknowledgement leaving Earth; an outbound packet says **Left ship**, and a stored packet never pretends it has left Earth. For free-text Earth advice, add a separate incoming-message metadata model with its actual departure and source-data times rather than misusing the outbound contract.
+The main app broadcasts `{ day, marsMode, lightTimeMin, outbox }` plus a mission ID, incoming queue and reply correlations on `baseline-sync`; storage events provide the fallback. Readings, future telemetry and private check-ins are excluded. Earth never mounts the ship clock or writes its mission session. A confirmed outbound message's badge refers to the automatic acknowledgement leaving Earth; an outbound packet says **Left ship**, and a stored packet never pretends it has left Earth.
+
+Free-text advice uses a separate incoming `OutboxState` and correlation records outside the shared interfaces. Only a received/confirmed source packet permits a reply. The ship accepts each reply ID once, schedules the next relay and a one-way return leg, and reveals advice only after arrival. Badges use the actual Earth departure and original ship data day. Reset and rewind generate a fresh mission ID to reject advice from the old timeline. `configureLink` keeps both queues' link settings together and freezes already-launched packets. Advice is advisory and never invokes treatment.
+
+`packReport` queues a real packet and records checklist step five atomically. `recordChecklist` handles steps one to four; shelter completion requires all five and a report packet. Forward `seekMission` preserves state; rewind replays actions already taken by that day, clears future events and review notes, and restarts communications. Use `createMission(1)` for a full reset. Restore migrates older saved sessions and validates care and communication metadata before rendering.
 
 ## Validation and remaining integration
 
 The automated suite covers baseline isolation, missing/invalid data, duplicate/interpolated readings, future-data leakage, strict thresholds, unhealthy directions, all three stories, confounders, shared CO2, independent fever, delayed action starts, recovery/escalation, episode deduplication, and a complete 180-day treated mission. Outbox tests cover exact boundaries, skipped ticks, mode switches, blackouts, badges, persistence, and invalid state. After merging main, `tests/integration.test.ts` also verifies a healthy 180-day run with Member 1's actual Engine, all three production story treatments, and automatic cabin recovery. `npm test` includes Member 1's original `scripts/check-engine.ts` checks.
 
-Browser checks verify the three recovery actions, cabin recovery, ineffective-treatment escalation, blackout retention, refresh persistence, and every Mars delivery state. There were no browser error/warning logs in the checked session. The test screen is not the team's six-module UI; real Engine + Brain + Face integration still needs a joint run before submission.
+The 58-test suite and Engine checks pass. Browser checks of the production build verify all six integrated modules, smartwatch action/recovery, cabin recovery, checklist/report completion, blackouts, near/Mars delivery, two-way advice, storage-event fallback and refresh persistence. Ineffective-treatment escalation remains available in the independent Brain lab. See `docs/QA_REPORT.md` and the README for the repeatable team walkthrough. Publication, pitch, video and final submission still require the team's review.
