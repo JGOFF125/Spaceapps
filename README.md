@@ -1,4 +1,4 @@
-# BASELINE — Member 2: The Brain
+# BASELINE — shared app and Member 2: The Brain
 
 Personal baselines, explainable drift alerts, countermeasures, recovery checks, and delayed Earth messaging for the team's NASA Space Apps prototype. The reusable logic is plain TypeScript with no runtime libraries, backend, database, or network requests. A separate React + Vite test bench lets Member 2 be tested before the other members' code arrives.
 
@@ -13,7 +13,7 @@ npm run build
 npm run dev
 ```
 
-On Windows, use `npm.cmd` if PowerShell blocks `npm.ps1`. Open the local URL printed by Vite (normally http://127.0.0.1:5173). After installation, the app and tests run offline. `npm test` runs the Node test suite; `npm run build` checks TypeScript and builds the test bench.
+On Windows, use `npm.cmd` if PowerShell blocks `npm.ps1`. Open the local URL printed by Vite (normally http://127.0.0.1:5173) for the shared cockpit shell. Open **http://127.0.0.1:5173/brain-lab.html** for Member 2's independent test bench. After installation, the app and tests run offline. `npm test` runs the Brain tests, actual Engine/Brain integration tests, and Member 1's engine checks. `npm run build` checks TypeScript and builds both pages. `npm run lint` checks the merged source.
 
 ## Try it yourself
 
@@ -40,7 +40,7 @@ Changing scenarios resets the test session and isolates that case. These are det
 - [Integration guide](docs/MEMBER_2_INTEGRATION.md): exported functions, event wiring, persistence, and exact rule semantics.
 - [Sources and limits](docs/SOURCES.md): what the NASA/CSA resources support and what remains a demo assumption.
 
-The checkout uses the existing GitHub branch **`J's-Branch`** in **JGOFF125/Spaceapps**. This implementation is local; no upload is part of the test step. When integrating into the team's app, keep their app shell and package setup; add `src/brain/`, verify their shared types match, and wire the API below. This package's React/Vite files only run the independent test bench; the Brain has no dependency on React, Tailwind, or Recharts.
+The checkout uses the existing GitHub branch **`J's-Branch`** in **JGOFF125/Spaceapps**. Main's React/Vite/Tailwind/Recharts setup, cockpit shell, shared types, and seeded Engine are preserved. Member 2's Brain replaces main's empty Brain placeholders. The root page remains the shared shell for Member 3; `brain-lab.html` is an independent test page. The Brain has no dependency on React, Tailwind, or Recharts. The automated integration suite runs Member 1's actual engine through detection, action, and recovery; connecting these APIs to the production cockpit is still Member 4's wiring task.
 
 ## Honest scope
 

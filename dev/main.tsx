@@ -47,11 +47,11 @@ function advance(session: Session, amount: number): Session {
   return { ...session, day, brain: advanceBrain(session.brain, data, day), outbox: tickOutbox(session.outbox, day) };
 }
 
-function App() {
+export default function App() {
   const [session, setSession] = useState(restore);
   const [selected, setSelected] = useState('maya');
   const [playing, setPlaying] = useState(false);
-  const [storageError, setStorageError] = useState(false);
+  const isPlaying = playing && session.day < 180;
   const data = useMemo(() => fixtureMission(session.treatments, session.works, session.scenario !== 'clean'), [session.treatments, session.works, session.scenario]);
   const day = Math.floor(session.day);
   const selectedCrew = CREW.find(c => c.id === selected)!;
@@ -62,13 +62,12 @@ function App() {
   const alerts = session.brain.alerts;
   const active = alerts.filter(a => a.status !== 'recovered').length;
 
-  useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(session)); setStorageError(false); } catch { setStorageError(true); } }, [session]);
+  useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(session)); } catch { /* Storage may be unavailable; keep the in-memory test session usable. */ } }, [session]);
   useEffect(() => {
-    if (!playing) return;
+    if (!isPlaying) return;
     const timer = window.setInterval(() => setSession(s => advance(s, 1)), 1700);
     return () => window.clearInterval(timer);
-  }, [playing]);
-  useEffect(() => { if (day >= 180) setPlaying(false); }, [day]);
+  }, [isPlaying]);
 
   function takeAction(alert: Alert) {
     setSession(s => ({ ...s,
@@ -84,7 +83,7 @@ function App() {
     <header><div><div className="eyebrow">THE VOID VOYAGUERS / MEMBER 02</div><h1>BASELINE<span className="dot">.</span></h1><p>Logic & alerts · integration test bench</p></div>
       <div className="mission"><span className="eyebrow">MISSION DAY</span><strong data-testid="day">{session.day.toFixed(2)} <small>/ 180</small></strong><span className="live">● Onboard rules active</span></div></header>
     <section className="controls" aria-label="Mission controls">
-      <div className="buttonrow"><button className="primary" onClick={() => setPlaying(p => !p)} disabled={day >= 180}>{playing ? 'Pause' : 'Play'}</button>
+      <div className="buttonrow"><button className="primary" onClick={() => setPlaying(p => !p)} disabled={day >= 180}>{isPlaying ? 'Pause' : 'Play'}</button>
         <button onClick={() => setSession(s => advance(s, 0.25))}>+6 hours</button><button onClick={() => setSession(s => advance(s, 1))}>+1 day</button><button onClick={() => setSession(s => advance(s, 3))}>+3 days</button>
         <button onClick={() => pickScenario(session.scenario)}>Reset case</button></div>
       <div className="buttonrow"><label className="switch"><input type="checkbox" checked={session.outbox.marsMode} onChange={e => setSession(s => ({ ...s, outbox: setMarsMode(s.outbox, e.target.checked) }))}/>Mars Mode</label>
@@ -123,7 +122,7 @@ function App() {
       <div className="link-state"><strong>{communicationLabel(session.outbox)}</strong><span>{session.outbox.blackout ? 'Waiting for link restoration' : `Next relay in ${relayCountdownHours(session.day).toFixed(1)} mission hours`} · 22 min = 0.5 demo day</span></div>
       {session.outbox.messages.length === 0 ? <p className="muted">Queue a report, then use +6 hours to inspect each delivery state.</p> : <div className="message-list">{[...session.outbox.messages].reverse().map(m => <article className="message" key={m.id}><div><strong>{m.summary}</strong><p>{badgeText(m, session.day, session.outbox.timings[m.id])}</p></div><span className={`state ${m.state}`}>{m.state}</span></article>)}</div>}
     </section>
-    <footer><p>Simulated test data · transparent demo rules · decision support, not diagnosis. Countermeasures are scripted examples for crew-medical review.</p><p>Member 2 only. The team’s production Engine and dashboard connect through <code>src/brain/index.ts</code>. {storageError ? 'Local storage unavailable; this session will not survive refresh.' : 'Test session saved locally. Reset case starts fresh.'}</p></footer>
+    <footer><p>Simulated test data · transparent demo rules · decision support, not diagnosis. Countermeasures are scripted examples for crew-medical review.</p><p>Member 2 only. The team’s production Engine and dashboard connect through <code>src/brain/index.ts</code>. Session saves locally when browser storage is available. Reset case starts fresh.</p></footer>
   </main>;
 }
 createRoot(document.getElementById('root')!).render(<App/>);
