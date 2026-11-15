@@ -1,0 +1,17 @@
+import { useState } from 'react';
+import type { DashboardModel } from './model.ts';
+import { Icon } from './Icon.tsx';
+import { Sparkline } from './charts.tsx';
+import { healthStatus, statusLabel } from './status.ts';
+export function WatchView({ model, onClose }: { model: DashboardModel; onClose: () => void }) {
+  const [page, setPage] = useState(0);
+  const { reading: r, session, astronaut } = model;
+  const active = model.alerts.filter(a => a.status !== 'recovered');
+  const severity = { watch: 1, warning: 2, critical: 3 };
+  const top = active.sort((a, b) => severity[b.level] - severity[a.level])[0];
+  const status = healthStatus(active, session.day < 15);
+  const rows = session.readings.filter(item => item.astronautId === astronaut.id && item.day <= session.day).slice(-14);
+  return <div className="watch-mode"><div className="watch-intro"><span className="eyebrow">BASELINE / WRIST COMPANION</span><h2>Your health, on hand.</h2><p>A compact view of {astronaut.name}’s onboard telemetry.<br/>Connected to the same mission clock and care loop.</p><button className="subtle-button" onClick={onClose}><Icon name="arrow"/>Return to mission console</button><span className="fine-print">Interactive browser preview · no physical watch is connected.</span></div><div className="watch-stage"><div className="watch-strap top"/><div className="watch-hardware"><div className="watch-crown"/><div className="watch-face"><div className="watch-topline"><b>BASELINE</b><span>D{String(Math.floor(session.day)).padStart(3, '0')}</span></div><div className="watch-person"><span className={`status-dot ${status}`}/>{astronaut.name}<span>{statusLabel[status]}</span></div>
+    {page === 0 ? <><div className="watch-heart"><Icon name="core" size={22}/><strong>{r.heartRate.toFixed(0)}<small>bpm</small></strong><span>Resting heart rate</span></div><Sparkline values={rows.map(item => item.heartRate)}/><div className="watch-pair"><div><b>{r.hrv.toFixed(0)}<small>ms</small></b><span>HRV</span></div><div><b>{r.sleepHours.toFixed(1)}<small>h</small></b><span>Sleep</span></div></div></> : page === 1 ? <div className="watch-readiness"><span className="micro-label">PERSONAL DRIFT</span><strong>{model.drift.ready ? Math.round(model.drift.score * 100) : '—'}<small>/100</small></strong><p>{model.drift.ready ? 'Compared with your personal normal' : 'Learning your personal normal'}</p><div><span>Temperature</span><b>{r.temperature.toFixed(1)} °C</b></div><div><span>Water today</span><b>{r.waterIntake.toFixed(1)} L</b></div></div> : <div className="watch-alert"><span className="micro-label">ONBOARD CARE</span>{top ? <><h2>{top.title}</h2><p>{top.action}</p>{top.status === 'acting' ? <span className="status-text watch">Action underway · rechecking</span> : <button className="primary-button" onClick={() => model.onAction(top.id)}>Start action</button>}</> : <><Icon name="shield" size={36}/><h2>No active alerts</h2><p>Onboard monitoring continues.</p></>}</div>}
+      <div className="watch-nav" aria-label="Watch screens">{['Vitals', 'Readiness', 'Care'].map((name, i) => <button aria-pressed={page === i} aria-label={`Watch ${name}`} key={name} onClick={() => setPage(i)}><span/>{name}</button>)}</div><div className="watch-link">{session.outbox.blackout ? 'BLACKOUT · ONBOARD ACTIVE' : session.outbox.marsMode ? 'MARS · 22 MIN EARTH DELAY' : 'ONBOARD MONITORING ACTIVE'}</div></div></div><div className="watch-strap bottom"/></div></div>;
+}
